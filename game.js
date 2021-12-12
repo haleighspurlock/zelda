@@ -140,4 +140,60 @@ scene("game", ({ level, score }) => {
     player.move(0, MOVE_SPEED);
     player.dir = vec2(0, 1);
   });
+
+  function spawnKaboom(p) {
+    const obj = add([sprite("kaboom"), pos(p), "kaboom"]);
+    wait(1, () => {
+      destroy(obj);
+    });
+  }
+
+  keyPress("space", () => {
+    spawnKaboom(player.pos.add(player.dir.scale(48)));
+  });
+
+  player.collides("door", (d) => {
+    destroy(d);
+  });
+
+  collides("kaboom", "skeletor", (k, s) => {
+    camShake(4);
+    wait(1, () => {
+      destroy(k);
+    });
+    destroy(s);
+    scoreLabel.value++;
+    scoreLabel.text = scoreLabel.value;
+  });
+
+  action("slicer", (s) => {
+    s.move(s.dir * SLICER_SPEED, 0);
+  });
+
+  collides("slicer", "wall", (s) => {
+    s.dir = -s.dir;
+  });
+
+  action("skeletor", (s) => {
+    s.move(0, s.dir * SKELETOR_SPEED);
+    s.timer -= dt();
+    if (s.timer <= 0) {
+      s.dir = -s.dir;
+      s.timer = rand(5);
+    }
+  });
+
+  collides("skeletor", "wall", (s) => {
+    s.dir = -s.dir;
+  });
+
+  player.overlaps("dangerous", () => {
+    go("lose", { score: scoreLabel.value });
+  });
 });
+
+scene("lose", ({ score }) => {
+  add([text(score, 32), origin("center"), pos(width() / 2, height() / 2)]);
+});
+
+start("game", { level: 0, score: 0 });
